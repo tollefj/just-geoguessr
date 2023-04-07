@@ -1,0 +1,53 @@
+{
+  "name": "geoguesser-meta",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@emotion/react": "^11.10.6",
+    "@emotion/styled": "^11.10.6",
+    "@fluentui/react": "^8.107.0",
+    "@microsoft/fast-components": "^2.30.6",
+    "@microsoft/fast-element": "^1.11.0",
+    "@microsoft/fast-foundation": "^2.47.1-0",
+    "@microsoft/fast-react-wrapper": "^0.3.16-0",
+    "@mui/icons-material": "^5.11.11",
+    "@mui/material": "^5.11.15",
+    "firebase": "^9.18.0",
+    "firebase-admin": "^11.6.0",
+    "firebaseui": "^6.0.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-markdown": "^8.0.6",
+    "react-router-dom": "^6.10.0",
+    "react-scripts": "5.0.1",
+    "react-syntax-highlighter": "^15.5.0",
+    "rehype-katex": "^6.0.2",
+    "remark-gfm": "^3.0.1",
+    "remark-math": "^5.1.1",
+    "web-vitals": "^3.3.0"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}

@@ -1,0 +1,82 @@
+html, body {
+  margin: 0;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #0b2638;
+  background: linear-gradient(160deg, #0b2638 0%, #030c12 100%);
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  margin-top: 2em;
+  /* always place content from the top */
+  padding-top: 0px;
+  /* background: linear-gradient(160deg, #0b2638 0%, #030c12 100%); */
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+img {
+  width: 100%;
+  /* max-width: 500px; */
+  height: auto;
+  /* nice border */
+  /* dotted, dashed, solid, double, groove, ridge, inset, outset, */
+  border: 3px groove gray;
+}
+
+#logo {
+  filter: invert(100%)
+}
+
+#content {
+  max-width: 768px;
+  padding: 20px;
+  margin: 20px;
+}
+
+@media only screen and (max-width: 600px) {
+  #content {
+    max-width: 100%;
+    padding: 5px;
+    margin: 5px;
+  }
+}
+
+::selection {
+  color: gray;
+  background:  #fff080;
+  /* extend the selection to mimick pdf highlighting */
+  padding: 0 5px;
+}
+
+::-moz-selection { /* Code for Firefox */
+  color: gray;
+  background: #fff080;
+  padding: 0 5px;
+}
+
+/* hyperlink styling with <a> */
+a {
+  color: white;
+  /* color: #fff080; */
+  text-decoration: none;
+}
+
+#tag {
+  color: #faca19;
+  /* add drop-shadow to the text font */
+  text-shadow: 2px 1px 2px darkred;
+  margin-right: 0.3em;
+}
+#title {
+  /* capitalized text with a red border around the text */
+  text-transform: uppercase;
+  color: #faca19;
+  /* text-shadow in all directions 5px! */
+  text-shadow: 2px 2px 2px darkred, 2px -2px 2px darkred, -2px 2px 2px darkred, -2px -2px 2px darkred;
+}

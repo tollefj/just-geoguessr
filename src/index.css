@@ -1,0 +1,8 @@
+@font-face {
+  font-family: 'Carter One', cursive;
+  src: url('./assets/fonts/CarterOne-Regular.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'source-code-pro';
+  src: url('./assets/fonts/SourceCodePro-Regular.ttf') format('truetype');
+}
