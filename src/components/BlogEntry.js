@@ -74,6 +74,7 @@ const BlogEntry = ({ blog, user }) => {
         updateDoc(doc(db, "blog", blog.id), {
             title: title,
             content: content,
+            tags: tags,
             edited: new Date().toISOString(),
         }).then(() => {
             setStatus("Saved");
@@ -112,32 +113,31 @@ const BlogEntry = ({ blog, user }) => {
             {/* <Typography variant="h4" color="text.secondary">
                 {title}
             </Typography> */}
-            <Typography variant="body2" color="text.secondary" component="p">
-                {`Posted ${docIdToIso(blog.id)} ${blog.edited ? `(edited ${docIdToIso(blog.edited)})` : ""}`}
-            </Typography>
+            {!editing && (
+
+                <Typography variant="body2" color="text.secondary" component="p">
+                    {`Posted ${docIdToIso(blog.id)} ${blog.edited ? `(edited ${docIdToIso(blog.edited)})` : ""}`}
+                </Typography>
+            )}
             {/* render tags with hastags, so from a list [tag1, tag2] */}
             {/* to #tag1 #tag2 */}
             {/* render by row, not column */}
-            <Box display="flex" flexDirection="row" justifyContent="flex-start">
-                {tags.map((tag) => (
-                    // browserrouter navigation Link
-                    <Box
-                        key={tag}
-                        id="tag"
-                        onClick={() => addTag(tag)}
-                        style={{
-                            cursor: "pointer",
-                        }}
-                    >
-                        {/* the link should add additional tags */}
-                        {/* e.g. localhost:3000/tag/road */}
-                        {/* =>  */}
-                        {/* localhost:3000/tag/road+signs */}
-                        {/* localhost:3000/tag/road+signs+speed */}
-                        {`#${tag}`}
-                    </Box>
-                ))}
-            </Box>
+            {editing ? (
+                <TextField fullWidth value={tags.join(",")} onChange={(e) => setTags(e.target.value.split(","))} />
+            ) : (
+                <Box display="flex" flexDirection="row" justifyContent="flex-start">
+                    {tags.map((tag) => (
+                        <Box
+                            key={tag}
+                            id="tag"
+                            onClick={() => addTag(tag)}
+                            style={{ cursor: "pointer" }}
+                        >
+                            {`#${tag}`}
+                        </Box>
+                    ))}
+                </Box>
+            )}
             {
                 editing ? (
                     <EditableText
@@ -151,11 +151,7 @@ const BlogEntry = ({ blog, user }) => {
                         overflow: 'auto',
                         textAlign: 'left',
                     }}>
-                        {blog.type === "math" ? (
-                            <MarkdownMath markdown={content} />
-                        ) : (
-                            <Markdown markdown={content} />
-                        )}
+                        <Markdown markdown={content} />
                     </Box>
                 )
             }
