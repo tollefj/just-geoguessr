@@ -5,13 +5,18 @@ import uploadImage from '../util/upload';
 import { storage, db } from '../firebase';
 import { setDoc, doc } from 'firebase/firestore';
 import { Box } from '@mui/system';
+import CountrySelector from '../components/CountrySelect';
 
-const BlogDialog = () => {
+const BlogDialog = ({ onStatusChange }) => {
     const [open, setOpen] = useState(false);
     const [title, setTitle] = useState('');
+    const [country, setCountry] = useState('');
     const [content, setContent] = useState('');
     const [tags, setTags] = useState('');
-    const [saving, setSaving] = useState(false);
+
+    useEffect(() => {
+        console.log("new country: ", country);
+    }, [country])
 
     const image = useImageClip();
     useEffect(() => {
@@ -27,7 +32,6 @@ const BlogDialog = () => {
     };
 
     const handleSubmit = async (event) => {
-        setSaving(true);
         event.preventDefault();
         const id = new Date().toISOString();
         await setDoc(doc(db, "blog", id), {
@@ -36,12 +40,13 @@ const BlogDialog = () => {
             tags: tags.split(',').map((tag) => tag.trim()),
         });
         handleClose();
+        onStatusChange("Added new meta!")
     };
 
     return (
         <div>
             <Box m={2}>
-                <Button onClick={handleOpen}>Update meta</Button>
+                <Button variant="outlined" onClick={handleOpen}>Add meta!</Button>
             </Box>
             <Dialog
                 open={open}
@@ -63,6 +68,8 @@ const BlogDialog = () => {
                         value={title}
                         onChange={(event) => setTitle(event.target.value)}
                     />
+                    <Typography variant="body2">Country</Typography>
+                    <CountrySelector handleChange={(c) => setCountry(c)} />
                     {/* tags, separated by comma */}
                     <Typography variant="body2">Tags, separated by comma</Typography>
                     <TextField
@@ -85,12 +92,6 @@ const BlogDialog = () => {
                     <Button type="submit" onClick={handleSubmit}>Create</Button>
                 </DialogActions>
             </Dialog>
-            <Snackbar
-                open={saving}
-                message="Saving blog post... Refresh when done."
-                autoHideDuration={5000}
-                onClose={() => setSaving(false)}
-            />
         </div >
     );
 }

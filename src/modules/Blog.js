@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Typography, Box, Button, Grid, Snackbar, Alert, LinearProgress, CircularProgress } from '@mui/material';
+import { Typography, Box, Button, Grid, Snackbar, Alert, LinearProgress, CircularProgress, TextField } from '@mui/material';
 import { collection, getDocs, query, where, orderBy, limit, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase";
 import BlogDialog from './BlogDialog';
@@ -8,36 +8,42 @@ import firebase from 'firebase/compat/app';
 import BlogEntry from '../components/BlogEntry';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
+// import the countries list from assets
+import { allCountries } from '../assets/countries';
+
 const coll = collection(db, "blog");
 
-const randomCountries = [
-    "sweden",
-    "equatorial guinea",
-    "guinea-bissau",
-    "mexico",
-    "slovenia",
-    "egypt",
-    "lesotho",
-    "new zealand",
-    "sri lanka",
-]
-const TITLE = `is this just ${randomCountries[Math.floor(Math.random() * randomCountries.length)]}?`;
+const TITLE = "is this just..."
 const DEFAULT_METAS = [
-    "signs",
-    "roads",
-    "bollards",
-    "language",
+    "signs 🛑",
+    "roads 🛣",
+    "bollards 🚧",
+    "language 🈁",
 ]
-
+const uid = "qcoGJu8twIeXwhRUASB9JNWiqOn1"
 
 const _where = (t) => where("tags", "array-contains", t);
 
+const debounce = (func, wait) => {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+};
+
 const Blog = () => {
     const [status, setStatus] = useState(null);
-
     const [user, setUser] = useState(null);
     const [blogs, setBlogs] = useState([]);
-    const [rawBlogs, setRawBlogs] = useState([]);
+    const [allBlogs, setAllBlogs] = useState([]);
+    const [searchStr, setSearchStr] = useState("");
+    const [availableTags, setAvailableTags] = useState(DEFAULT_METAS);
+    const [showTags, setShowTags] = useState(false);
 
     const navigate = useNavigate();
 
@@ -48,29 +54,52 @@ const Blog = () => {
     useEffect(() => {
         const getBlogs = async () => {
             let q;
-            if (!!tag) {
-                q = query(coll, _where(tag), orderBy("title"));
-            } else {
-                q = query(coll, orderBy("title"));
-            }
-            const unsubscribe = onSnapshot(q, (querySnapshot) => {
-                setBlogs(querySnapshot.docs.map((doc) => {
-                    return {
+            if (!!tag) { q = query(coll, _where(tag), orderBy("title")); }
+            else { q = query(coll, orderBy("title")); }
+            let allTags = [];
+            // const unsubscribe =...
+            onSnapshot(q, (querySnapshot) => {
+                let blogs = [];
+                querySnapshot.docs.map((doc) => {
+                    allTags = [...allTags, ...doc.data().tags];
+                    return blogs.push({
                         id: doc.id,
                         ...doc.data(),
-                    }
-                }));
+                    })
+                });
+                setBlogs(blogs);
+                setAllBlogs(blogs);
             });
+            setAvailableTags([...new Set(allTags)]);
             setStatus("Loading blogs...done")
         }
         getBlogs();
-    }, [tag, rawBlogs]);
+    }, [tag]);
 
-    // const uid = "DAwJOYj9TqQ6wBVpDADI772d9Xg1"
+    // check on search string change:
+    useEffect(() => {
+        if (searchStr.length > 0) {
+            // split a search like "sweden road signs" into ["sweden", "road", "signs"]
+            // match all these search tokens
+            let s = searchStr.toLowerCase().split(" ");
+
+            setBlogs(allBlogs.filter((blog) => {
+                // combine all tokens from title, content and tags
+                const titleTokens = blog.title.toLowerCase().split(" ");
+                const contentTokens = blog.content.toLowerCase().split(" ");
+                const tagsTokens = blog.tags;
+                const allTokens = [...titleTokens, ...contentTokens, ...tagsTokens];
+                // and check if any of them contains the search string
+                return s.every((searchToken) => allTokens.some((token) => token.includes(searchToken)));
+            }))
+        } else {
+            setBlogs(allBlogs);
+        }
+    }, [searchStr, allBlogs])
 
     useEffect(() => {
         const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
-            if (user && user.uid !== null) {
+            if (user && user.uid === uid) {
                 setUser(user);
             } else {
                 setUser(null);
@@ -81,48 +110,27 @@ const Blog = () => {
         };
     }, []);
 
-    const addTag = (t) => {
-        const currTags = tag ? tag.split("+") : [];
-        let nextTags;
-
-        if (currTags.includes(t)) {
-            // remove tag, such that tag1+tag2 => tag1
-            nextTags = currTags.filter((tag) => tag !== t);
-            if (nextTags.length === 0) {
-                navigate(`/`);
-                return;
-            }
-        } else {
-            nextTags = currTags.concat(t);
-        }
-        navigate(`/tag/${nextTags.join("+")}`);
-    }
-
     return (
-        <>
-            <Box id="title" textAlign='center'>
-                <Typography variant="h2" color="text.primary">
-                    {TITLE}
-                </Typography>
-            </Box>
-            <div id="content">
-                <Box sx={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    flexDirection: 'column',
-                }}>
-                    {user && (<BlogDialog />)}
-                    <Grid container spacing={2} justifyContent="center" alignItems="center">
-                        {DEFAULT_METAS.map((meta) => (
-                            <Button
-                                variant={tag && tag.split("+").includes(meta) ? "contained" : "outlined"}
-                                key={meta}
-                                onClick={() => addTag(meta)}
-                                sx={{ m: 1, }}
-                            >{meta}</Button>
-                        ))}
-                    </Grid>
+        <Box justifyContent='center' justifyItems='center'>
+            <Box id="content">
+                <Box id="title" textAlign='center'>
+                    <Typography variant="h3" color="text.primary">
+                        {TITLE}
+                    </Typography>
+                </Box>
+                <Box display='flex' justifyContent='center' alignItems='center' flexDirection='column' pt={3} px={2}>
+                    {/* search field that debounces setSearchStr and keeps its value */}
+                    <TextField
+                        autoFocus
+                        fullWidth
+                        label="Search"
+                        // variant="filled"
+                        value={searchStr}
+                        onChange={(e) => debounce(setSearchStr(e.target.value), 500)}
+                    />
+                    {/* update meta modal */}
+                    {user && (<BlogDialog onStatusChange={(status) => setStatus(status)} />)}
+
                     {tag && (<Typography variant="body2" color="text.secondary" component="p" textAlign={"center"}>
                         {/* tags are separated by +, illustrate by #1 #2 */}
                         Filtered by: {tag.split("+").map((tag, index) => <span id="tag" key={index}>#{tag}</span>)
@@ -132,30 +140,30 @@ const Blog = () => {
                 </Box>
 
                 {status !== null && !status.includes("Loading") ? (
-                    <Box my={5} display="flex" justifyContent="center" alignItems="center">
-                        <CircularProgress />
-                    </Box>
+                    <Box my={5} display="flex" justifyContent="center" alignItems="center"><CircularProgress /></Box>
                 ) : (
                     blogs.map((blog) => (
-                        <BlogEntry key={blog.id} blog={blog} user={user} />
+                        <BlogEntry
+                            key={blog.id}
+                            blog={blog}
+                            user={user}
+                            onStatusChange={(status) => setStatus(status)}
+                        />
                     ))
                 )}
                 <Snackbar
                     open={!!status && !status.includes("Loading")}
                     autoHideDuration={1000}
                     onClose={() => setStatus(null)}
-                    anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-                >
-                    <Alert severity="info">
-                        {status}
-                    </Alert>
+                    anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+                    <Alert severity="info">{status}</Alert>
                 </Snackbar>
 
                 {/* <Typography variant="body2" color="text.secondary" component="p" textAlign={"center"}>
                     This is a page by <a href="https://github.com/tollefj">me</a>.
                 </Typography> */}
-            </div>
-        </>
+            </Box>
+        </Box>
     );
 }
 

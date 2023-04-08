@@ -25,13 +25,21 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
-img {
+p > img {
   width: 100%;
-  /* max-width: 500px; */
   height: auto;
-  /* nice border */
-  /* dotted, dashed, solid, double, groove, ridge, inset, outset, */
-  border: 3px groove gray;
+  border-radius: 5px;
+  border: 1px solid lightgray;
+}
+
+
+h6 > img {
+  /* width: 20px !important; */
+  margin-bottom: -5px;
+  width: 40px;
+  height: auto;
+  border: none;
+  border-radius: 5px;
 }
 
 #logo {
@@ -42,6 +50,15 @@ img {
   max-width: 768px;
   padding: 20px;
   margin: 20px;
+}
+
+#entry {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 5px;
+  transition: background-color 0.2s;
+}
+#entry:hover {
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 @media only screen and (max-width: 600px) {
@@ -73,15 +90,15 @@ a {
 }
 
 #tag {
+  cursor: pointer;
   color: #faca19;
-  /* add drop-shadow to the text font */
-  text-shadow: 2px 1px 2px darkred;
   margin-right: 0.3em;
 }
+#tag:hover {
+  text-shadow: 2px 2px 4px darkred;
+}
 #title {
-  /* capitalized text with a red border around the text */
   text-transform: uppercase;
   color: #faca19;
-  /* text-shadow in all directions 5px! */
   text-shadow: 2px 2px 2px darkred, 2px -2px 2px darkred, -2px 2px 2px darkred, -2px -2px 2px darkred;
 }
