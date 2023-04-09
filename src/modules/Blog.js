@@ -9,7 +9,7 @@ import BlogEntry from '../components/BlogEntry';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
 // import the countries list from assets
-import { allCountries } from '../assets/countries';
+import { countries } from '../assets/countries';
 
 const coll = collection(db, "blog");
 
@@ -44,8 +44,6 @@ const Blog = () => {
     const [searchStr, setSearchStr] = useState("");
     const [availableTags, setAvailableTags] = useState(DEFAULT_METAS);
     const [showTags, setShowTags] = useState(false);
-
-    const navigate = useNavigate();
 
     // this is inside the RouterProvider context
     // get the /tags/:tag route param
@@ -88,7 +86,9 @@ const Blog = () => {
                 const titleTokens = blog.title.toLowerCase().split(" ");
                 const contentTokens = blog.content.toLowerCase().split(" ");
                 const tagsTokens = blog.tags;
-                const allTokens = [...titleTokens, ...contentTokens, ...tagsTokens];
+                const countryTokens = !!blog.country ? [blog.country.label.toLowerCase()] : []
+                // countrytags
+                const allTokens = [...titleTokens, ...contentTokens, ...tagsTokens, ...countryTokens];
                 // and check if any of them contains the search string
                 return s.every((searchToken) => allTokens.some((token) => token.includes(searchToken)));
             }))
@@ -111,58 +111,56 @@ const Blog = () => {
     }, []);
 
     return (
-        <Box justifyContent='center' justifyItems='center'>
-            <Box id="content">
-                <Box id="title" textAlign='center'>
-                    <Typography variant="h3" color="text.primary">
-                        {TITLE}
-                    </Typography>
-                </Box>
-                <Box display='flex' justifyContent='center' alignItems='center' flexDirection='column' pt={3} px={2}>
-                    {/* search field that debounces setSearchStr and keeps its value */}
-                    <TextField
-                        autoFocus
-                        fullWidth
-                        label="Search"
-                        // variant="filled"
-                        value={searchStr}
-                        onChange={(e) => debounce(setSearchStr(e.target.value), 500)}
-                    />
-                    {/* update meta modal */}
-                    {user && (<BlogDialog onStatusChange={(status) => setStatus(status)} />)}
+        <Box id="content" w={1}>
+            <Box id="title" textAlign='center'>
+                <Typography variant="h3" color="text.primary">
+                    {TITLE}
+                </Typography>
+            </Box>
+            <Box display='flex' justifyContent='center' alignItems='center' flexDirection='column' pt={3} px={2}>
+                {/* search field that debounces setSearchStr and keeps its value */}
+                <TextField
+                    autoFocus
+                    fullWidth
+                    label="Search..."
+                    placeholder='Search for countries, signs, bollard, languages...'
+                    value={searchStr}
+                    onChange={(e) => debounce(setSearchStr(e.target.value), 500)}
+                />
+                {/* update meta modal */}
+                {user && (<BlogDialog onStatusChange={(status) => setStatus(status)} />)}
 
-                    {tag && (<Typography variant="body2" color="text.secondary" component="p" textAlign={"center"}>
-                        {/* tags are separated by +, illustrate by #1 #2 */}
-                        Filtered by: {tag.split("+").map((tag, index) => <span id="tag" key={index}>#{tag}</span>)
-                        }
-                    </Typography>)}
-                    {tag && (<Link to="/"><Button>Clear tag filter</Button></Link>)}
-                </Box>
-
-                {status !== null && !status.includes("Loading") ? (
-                    <Box my={5} display="flex" justifyContent="center" alignItems="center"><CircularProgress /></Box>
-                ) : (
-                    blogs.map((blog) => (
+                {tag && (<Typography variant="body2" color="text.secondary" component="p" textAlign={"center"}>
+                    {/* tags are separated by +, illustrate by #1 #2 */}
+                    Filtered by: {tag.split("+").map((tag, index) => <span id="tag" key={index}>#{tag}</span>)
+                    }
+                </Typography>)}
+                {tag && (<Link to="/"><Button>Clear tag filter</Button></Link>)}
+            </Box>
+            {status !== null && !status.includes("Loading") ? (
+                <Box my={5} display="flex" justifyContent="center" alignItems="center"><CircularProgress /></Box>
+            ) : (
+                <Box >
+                    {blogs.map((blog) => (
                         <BlogEntry
                             key={blog.id}
                             blog={blog}
                             user={user}
                             onStatusChange={(status) => setStatus(status)}
                         />
-                    ))
-                )}
-                <Snackbar
-                    open={!!status && !status.includes("Loading")}
-                    autoHideDuration={1000}
-                    onClose={() => setStatus(null)}
-                    anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
-                    <Alert severity="info">{status}</Alert>
-                </Snackbar>
-
-                {/* <Typography variant="body2" color="text.secondary" component="p" textAlign={"center"}>
-                    This is a page by <a href="https://github.com/tollefj">me</a>.
-                </Typography> */}
-            </Box>
+                    ))}
+                </Box>
+            )}
+            <Snackbar
+                open={!!status && !status.includes("Loading")}
+                autoHideDuration={1000}
+                onClose={() => setStatus(null)}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+                <Alert severity="info">{status}</Alert>
+            </Snackbar>
+            {/* <Typography variant="body2" color="text.secondary" component="p" textAlign={"center"}>
+                This is a page by <a href="https://github.com/tollefj">me</a>.
+            </Typography> */}
         </Box>
     );
 }

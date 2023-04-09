@@ -98,116 +98,93 @@ const BlogEntry = ({ blog, user, onStatusChange }) => {
         }
         navigate(`/tag/${currTags.concat(tag).join("+")}`);
     }
-    console.log(country)
 
     return (
-        <>
-            {/* <Box sx={{
-                backgroundImage: !!country ?
-                    `url(https://flagcdn.com/w160/${country.code.toLowerCase()}.png)`
-                    : "none",
-                backgroundSize: "cover",
-                backgroundRepeat: "no-repeat",
-                backgroundPosition: "center",
-                filter: "blur(10px)",
-                zIndex: -1,
-            }}
-            /> */}
-            <Box p={2} m={2} id="entry" sx={{
-                backgroundImage: !!country ?
-                    `url(https://flagcdn.com/w160/${country.code.toLowerCase()}.png)`
-                    : "none",
-                backgroundSize: "cover",
-                backgroundRepeat: "no-repeat",
-                backgroundPosition: "center",
-                // filter: "blur(10px)",
-                // backdropFilter: "blur(100px)",
-                zIndex: -1,
-            }} >
-                {/* 
-
-                Split the title of a blog entry as follows:
-
-                TITLE           TAGS
-                Posted at ...
-            */}
-                <Box display="flex" flexDirection="row" justifyContent="space-between">
-                    <Box display="flex" flexDirection="column" justifyContent="flex-start">
-                        <EditableText
-                            text={title}
-                            editing={editing}
-                            variant="h5"
-                            onChange={(e) => setTitle(e.target.value)}
-                            primary
-                        />
-                    </Box>
-                    <Box>
-                        {editing ? (
-                            <TextField fullWidth value={tags.join(",")} onChange={(e) => setTags(e.target.value.split(","))} />
-                        ) : (
-                            <Box display="flex" flexDirection="row" justifyContent="flex-start">
-                                {tags.map((tag) => (
-                                    <Box
-                                        key={tag}
-                                        id="tag"
-                                        onClick={() => addTag(tag)}
-                                    >
-                                        {`#${tag}`}
-                                    </Box>
-                                ))}
-                            </Box>
-                        )}
-                    </Box>
-                </Box>
-                <Box>
-                    {!editing && (
-                        <Typography variant="body2" color="text.secondary" component="p">
-                            {`Posted ${docIdToIso(blog.id)} ${blog.edited ? `(edited ${docIdToIso(blog.edited)})` : ""}`}
-                        </Typography>
-                    )}
+        <Box p={2} m={2} id="entry">
+            <Box display="flex" flexDirection="row" justifyContent="space-between">
+                <Box display="flex" flexDirection="column" justifyContent="flex-start">
+                    <EditableText
+                        text={title}
+                        editing={editing}
+                        variant="h5"
+                        onChange={(e) => setTitle(e.target.value)}
+                        primary
+                    />
                 </Box>
                 <Box>
                     {editing ? (
-                        <CountrySelector handleChange={(c) => setCountry(c)} />
+                        <TextField fullWidth value={tags.join(",")} onChange={(e) => setTags(e.target.value.split(","))} />
                     ) : (
-                        !!country && (
-                            <Typography variant='h6' color="text.primary">
-                                <img
-                                    loading="lazy"
-                                    src={`https://flagcdn.com/w40/${country.code.toLowerCase()}.png`}
-                                    srcSet={`https://flagcdn.com/w40/${country.code.toLowerCase()}.png 2x`}
-                                    alt={country.label}
-                                />
-                                &nbsp;{country.label}, 📞+{country.phone}
-                            </Typography>
-                        )
+                        <Box display="flex" flexDirection="row" justifyContent="flex-start">
+                        </Box>
                     )}
                 </Box>
-                {/* render tags with hastags, so from a list [tag1, tag2] */}
-                {/* to #tag1 #tag2 */}
-                {/* render by row, not column */}
-                {
-                    editing ? (
-                        <EditableText
-                            text={content}
-                            editing={editing}
-                            onChange={(e) => setContent(e.target.value)}
-                            variant="body2"
-                        />
-                    ) : (
-                        <Box maxWidth={"100%"} style={{
-                            overflow: 'auto',
-                            textAlign: 'left',
-                        }}>
-                            <Markdown markdown={content} />
-                        </Box>
+            </Box>
+            <Box>
+                {!editing && (
+                    <Typography variant="body2" color="text.secondary" component="p">
+                        {`Posted ${docIdToIso(blog.id)} ${blog.edited ? `(edited ${docIdToIso(blog.edited)})` : ""}`}
+                    </Typography>
+                )}
+            </Box>
+            <Box>
+                {editing ? (
+                    <CountrySelector handleChange={(c) => setCountry(c)} />
+                ) : (
+                    !!country && (
+                        <Typography variant='h6' color="text.primary">
+                            <img
+                                loading="lazy"
+                                src={`https://flagcdn.com/w40/${country.code.toLowerCase()}.png`}
+                                srcSet={`https://flagcdn.com/w40/${country.code.toLowerCase()}.png 2x`}
+                                alt={country.label}
+                            />
+                            &nbsp;{country.label}, 📞+{country.phone}
+                        </Typography>
                     )
-                }
-                {/* flex rows */}
-                {
-                    user && (
-                        <Box display="flex" flexDirection="row" justifyContent="flex-end">
-                            {/* edit button */}
+                )}
+            </Box>
+            {/* render tags with hastags, so from a list [tag1, tag2] */}
+            {/* to #tag1 #tag2 */}
+            {/* render by row, not column */}
+            {
+                editing ? (
+                    <EditableText
+                        text={content}
+                        editing={editing}
+                        onChange={(e) => setContent(e.target.value)}
+                        variant="body2"
+                    />
+                ) : (
+                    <Box maxWidth={"100%"} style={{
+                        overflow: 'auto',
+                        textAlign: 'left',
+                    }}>
+                        <Markdown markdown={content} />
+                    </Box>
+                )
+            }
+            {/* flex rows */}
+            {/*
+            Flex box with the tags to the left, and buttons to the right
+            [tag1, tag2, tag3]      [edit, delete]
+            spacebetween
+            */}
+            <Box display="flex" flexDirection="row" justifyContent="space-between" alignItems="center">
+                <Box display="flex" flexDirection="row" justifyContent="flex-start">
+                    {tags.map((tag) => (
+                        <Box
+                            key={tag}
+                            id="tag"
+                            onClick={() => addTag(tag)}
+                        >
+                            {`#${tag}`}
+                        </Box>
+                    ))}
+                </Box>
+                <Box display="flex" flexDirection="row" justifyContent="flex-end">
+                    {user && (
+                        <>
                             <IconButton onClick={() => {
                                 if (editing) {
                                     onSave();
@@ -220,11 +197,11 @@ const BlogEntry = ({ blog, user, onStatusChange }) => {
                             <IconButton onClick={handleDelete}>
                                 <DeleteIcon />
                             </IconButton>
-                        </Box>
-                    )
-                }
+                        </>
+                    )}
+                </Box>
             </Box>
-        </>
+        </Box>
     )
 }
 

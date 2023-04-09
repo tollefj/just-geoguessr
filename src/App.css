@@ -14,6 +14,7 @@ html, body {
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 100%;
   min-height: 100vh;
   margin-top: 2em;
   /* always place content from the top */
@@ -35,10 +36,10 @@ p > img {
 
 h6 > img {
   /* width: 20px !important; */
-  margin-bottom: -5px;
+  margin-bottom: -7px;
   width: 40px;
   height: auto;
-  border: none;
+  border: 2px solid black;
   border-radius: 5px;
 }
 
@@ -47,7 +48,9 @@ h6 > img {
 }
 
 #content {
-  max-width: 768px;
+  width: 100%;
+  /* max-width: 768px; */
+  max-width: 900px;
   padding: 20px;
   margin: 20px;
 }

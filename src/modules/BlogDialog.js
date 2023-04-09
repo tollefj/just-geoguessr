@@ -9,7 +9,7 @@ import CountrySelector from '../components/CountrySelect';
 
 const BlogDialog = ({ onStatusChange }) => {
     const [open, setOpen] = useState(false);
-    const [title, setTitle] = useState('');
+    // const [title, setTitle] = useState('');
     const [country, setCountry] = useState('');
     const [content, setContent] = useState('');
     const [tags, setTags] = useState('');
@@ -35,7 +35,8 @@ const BlogDialog = ({ onStatusChange }) => {
         event.preventDefault();
         const id = new Date().toISOString();
         await setDoc(doc(db, "blog", id), {
-            title: title,
+            // title: title,
+            country: country,
             content: content,
             tags: tags.split(',').map((tag) => tag.trim()),
         });
@@ -62,12 +63,12 @@ const BlogDialog = ({ onStatusChange }) => {
                         gap: '20px',
                     }}
                 >
-                    <Typography variant="body2">Title of meta, country etc...</Typography>
+                    {/* <Typography variant="body2">Title of meta, country etc...</Typography>
                     <TextField
                         label="Title"
                         value={title}
                         onChange={(event) => setTitle(event.target.value)}
-                    />
+                    /> */}
                     <Typography variant="body2">Country</Typography>
                     <CountrySelector handleChange={(c) => setCountry(c)} />
                     {/* tags, separated by comma */}
