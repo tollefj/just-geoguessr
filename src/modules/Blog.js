@@ -36,6 +36,51 @@ const debounce = (func, wait) => {
     };
 };
 
+// fuzzy search from scratch
+// if my blog post contains "sweden, bollard, red, blue, chevron"
+// i want to match seden bolard cheron
+// implement a lazy search with levenshtein distance
+function levenshtein(a, b) {
+    if (a.length === 0) return b.length;
+    if (b.length === 0) return a.length;
+    let matrix = [];
+    let i;
+    for (i = 0; i <= b.length; i++) { matrix[i] = [i]; }
+
+    let j;
+    for (j = 0; j <= a.length; j++) { matrix[0][j] = j; }
+
+    for (i = 1; i <= b.length; i++) {
+        for (j = 1; j <= a.length; j++) {
+            if (b.charAt(i - 1) === a.charAt(j - 1)) {
+                matrix[i][j] = matrix[i - 1][j - 1];
+            } else {
+                matrix[i][j] = Math.min(matrix[i - 1][j - 1] + 1, // substitution
+                    Math.min(matrix[i][j - 1] + 1, // insertion
+                        matrix[i - 1][j] + 1)); // deletion
+            }
+        }
+    }
+    return matrix[b.length][a.length];
+}
+const lazySearch = (searchStr, blog) => {
+    if (searchStr.length === 0) return true;
+    if (!blog.searchTokens) return false;
+    let s = searchStr.toLowerCase().split(" ");
+    // compute the levenshtein distance for each search token
+    // and each blog token
+    let distances = [];
+    s.forEach((searchToken) => {
+        blog.searchTokens.forEach((token) => {
+            distances.push(levenshtein(searchToken, token));
+        })
+    })
+    // if the minimum distance is less than 3, we have a match
+    const min = Math.min(...distances);
+    const match = min < 6;
+    return match;
+}
+
 const Blog = () => {
     const [status, setStatus] = useState(null);
     const [user, setUser] = useState(null);
@@ -45,6 +90,9 @@ const Blog = () => {
     const [availableTags, setAvailableTags] = useState(DEFAULT_METAS);
     const [showTags, setShowTags] = useState(false);
 
+    const [open, setOpen] = useState(false);  // dialog/editor open
+    const [editingBlogId, setEditingBlogId] = useState(null);
+
     // this is inside the RouterProvider context
     // get the /tags/:tag route param
     const { tag } = useParams();
@@ -52,8 +100,8 @@ const Blog = () => {
     useEffect(() => {
         const getBlogs = async () => {
             let q;
-            if (!!tag) { q = query(coll, _where(tag), orderBy("title")); }
-            else { q = query(coll, orderBy("title")); }
+            if (!!tag) { q = query(coll, _where(tag), orderBy("posted", "desc")); }
+            else { q = query(coll, orderBy("posted", "desc")); }
             let allTags = [];
             // const unsubscribe =...
             onSnapshot(q, (querySnapshot) => {
@@ -77,21 +125,15 @@ const Blog = () => {
     // check on search string change:
     useEffect(() => {
         if (searchStr.length > 0) {
-            // split a search like "sweden road signs" into ["sweden", "road", "signs"]
-            // match all these search tokens
             let s = searchStr.toLowerCase().split(" ");
+            // use the lazy search
+            setBlogs(allBlogs.filter((blog) => lazySearch(searchStr, blog)));
 
-            setBlogs(allBlogs.filter((blog) => {
-                // combine all tokens from title, content and tags
-                const titleTokens = blog.title.toLowerCase().split(" ");
-                const contentTokens = blog.content.toLowerCase().split(" ");
-                const tagsTokens = blog.tags;
-                const countryTokens = !!blog.country ? [blog.country.label.toLowerCase()] : []
-                // countrytags
-                const allTokens = [...titleTokens, ...contentTokens, ...tagsTokens, ...countryTokens];
-                // and check if any of them contains the search string
-                return s.every((searchToken) => allTokens.some((token) => token.includes(searchToken)));
-            }))
+            // setBlogs(allBlogs.filter((blog) => {
+            //     return s.every((searchToken) =>
+            //         blog.searchTokens.some((token) =>
+            //             token.includes(searchToken)));
+            // }))
         } else {
             setBlogs(allBlogs);
         }
@@ -128,7 +170,31 @@ const Blog = () => {
                     onChange={(e) => debounce(setSearchStr(e.target.value), 500)}
                 />
                 {/* update meta modal */}
-                {user && (<BlogDialog onStatusChange={(status) => setStatus(status)} />)}
+                {user && (
+                    <>
+                        <Box m={2}>
+                            <Button
+                                variant="outlined"
+                                onClick={() => setOpen(!open)}
+                            >
+                                Add meta!
+                            </Button>
+                        </Box>
+                        <BlogDialog
+                            open={editingBlogId !== null || open}
+                            blog={blogs.find((blog) => blog.id === editingBlogId)}
+                            onStatusChange={(status) => {
+                                setStatus(status);
+                                setOpen(false);
+                                setEditingBlogId(null);
+                            }}
+                            onClose={() => {
+                                setOpen(false);
+                                setEditingBlogId(null);
+                            }}
+                        />
+                    </>
+                )}
 
                 {tag && (<Typography variant="body2" color="text.secondary" component="p" textAlign={"center"}>
                     {/* tags are separated by +, illustrate by #1 #2 */}
@@ -140,12 +206,14 @@ const Blog = () => {
             {status !== null && !status.includes("Loading") ? (
                 <Box my={5} display="flex" justifyContent="center" alignItems="center"><CircularProgress /></Box>
             ) : (
-                <Box >
+                <Box>
                     {blogs.map((blog) => (
                         <BlogEntry
                             key={blog.id}
                             blog={blog}
                             user={user}
+                            isEditing={(blog.id === editingBlogId)}
+                            onEdit={() => setEditingBlogId(blog.id)}
                             onStatusChange={(status) => setStatus(status)}
                         />
                     ))}
