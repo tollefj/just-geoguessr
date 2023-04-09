@@ -10,6 +10,8 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 
 // import the countries list from assets
 import { countries } from '../assets/countries';
+import { flagColors } from '../assets/flagColors';
+import { Flag } from '@mui/icons-material';
 
 const coll = collection(db, "blog");
 
@@ -21,6 +23,11 @@ const DEFAULT_METAS = [
     "language 🈁",
 ]
 const uid = "qcoGJu8twIeXwhRUASB9JNWiqOn1"
+
+// function to map a country name to its country object in countries.js
+function getCountry(name) {
+    return countries.find((c) => c.label.toLowerCase() === name.toLowerCase());
+}
 
 const _where = (t) => where("tags", "array-contains", t);
 
@@ -71,14 +78,15 @@ const lazySearch = (searchStr, blog) => {
     // and each blog token
     let distances = [];
     s.forEach((searchToken) => {
+        if (searchToken.length === 0) return;
         blog.searchTokens.forEach((token) => {
             distances.push(levenshtein(searchToken, token));
         })
     })
     // if the minimum distance is less than 3, we have a match
     const min = Math.min(...distances);
-    const match = min < 6;
-    return match;
+    const lazyMatch = 2
+    return min < lazyMatch;
 }
 
 const Blog = () => {
@@ -88,7 +96,8 @@ const Blog = () => {
     const [allBlogs, setAllBlogs] = useState([]);
     const [searchStr, setSearchStr] = useState("");
     const [availableTags, setAvailableTags] = useState(DEFAULT_METAS);
-    const [showTags, setShowTags] = useState(false);
+    const [flagSearch, setFlagSearch] = useState("");
+    const [flagMatches, setFlagMatches] = useState([]);
 
     const [open, setOpen] = useState(false);  // dialog/editor open
     const [editingBlogId, setEditingBlogId] = useState(null);
@@ -125,19 +134,51 @@ const Blog = () => {
     // check on search string change:
     useEffect(() => {
         if (searchStr.length > 0) {
-            let s = searchStr.toLowerCase().split(" ");
-            // use the lazy search
             setBlogs(allBlogs.filter((blog) => lazySearch(searchStr, blog)));
-
-            // setBlogs(allBlogs.filter((blog) => {
-            //     return s.every((searchToken) =>
-            //         blog.searchTokens.some((token) =>
-            //             token.includes(searchToken)));
-            // }))
         } else {
             setBlogs(allBlogs);
         }
     }, [searchStr, allBlogs])
+
+    useEffect(() => {
+        // call the debounced function max 200ms after typing stop
+        const timer = setTimeout(() => {
+            let s = flagSearch.toLowerCase().trim();
+            if (!s) {
+                setFlagMatches([]);
+                return;
+            }
+            // replace yellow->gold if it exists
+            if (s.includes("yellow")) {
+                s = s.replace("yellow", "gold");
+            }
+            let separator = s.match(/[^a-zA-Z0-9]/g);
+            if (separator) {
+                separator = separator[0];
+            }
+            if (s.endsWith(separator)) {
+                s = s.slice(0, -1);
+            }
+            s = s.split(separator).map((s) => s.trim()).sort().join("|");
+            if (s.length > 0) {
+                let matches = [];
+                for (let [key, value] of Object.entries(flagColors)) {
+                    if (key.includes(s)) {
+                        matches.push(...value);
+                    }
+                }
+                matches = [...new Set(matches)];
+                matches = matches
+                    .map((match) => getCountry(match))
+                    .filter((match) => !!match);
+                setFlagMatches(matches);
+            }
+        }, 500);
+
+        return () => {
+            clearTimeout(timer);
+        };
+    }, [flagSearch])
 
     useEffect(() => {
         const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
@@ -160,15 +201,52 @@ const Blog = () => {
                 </Typography>
             </Box>
             <Box display='flex' justifyContent='center' alignItems='center' flexDirection='column' pt={3} px={2}>
-                {/* search field that debounces setSearchStr and keeps its value */}
-                <TextField
-                    autoFocus
-                    fullWidth
-                    label="Search..."
-                    placeholder='Search for countries, signs, bollard, languages...'
-                    value={searchStr}
-                    onChange={(e) => debounce(setSearchStr(e.target.value), 500)}
-                />
+                {/* [SEARCH]        [Flag Search] */}
+                {/* <Box display='flex' justifyContent='center' alignItems='center' flexDirection='row' w={1}> */}
+                {/* take up the entire width */}
+                <Grid container spacing={1}>
+                    <Grid item xs={12} sm={6}>
+                        <TextField
+                            autoFocus
+                            fullWidth
+                            label="Search..."
+                            placeholder='Search for countries, signs, bollard, languages...'
+                            value={searchStr}
+                            onChange={(e) => debounce(setSearchStr(e.target.value), 500)}
+                        />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                        <TextField
+                            autoFocus
+                            fullWidth
+                            label="Flag Search..."
+                            placeholder="Search for any flag colors"
+                            value={flagSearch}
+                            onChange={(e) => setFlagSearch(e.target.value)}
+                        />
+                    </Grid>
+                </Grid>
+                {/* show the matching flags */}
+                {/* layout: */}
+                {/* *flag* country       *flag* country        * flag country **/}
+                {/* in a grid, scale it */}
+                {flagMatches.length > 0 && (
+                    <Grid container spacing={1}>
+                        {flagMatches.map((country) => (
+                            <Grid key={country.code} item xs={4} sm={3} md={2}>
+                                <p>
+                                    <img
+                                        loading="lazy"
+                                        src={`https://flagcdn.com/h60/${country.code}.png`}
+                                        srcSet={`https://flagcdn.com/h80/${country.code}.png 2x`}
+                                        alt={country.label}
+                                    />
+                                    {country.label}
+                                </p>
+                            </Grid>
+                        ))}
+                    </Grid>
+                )}
                 {/* update meta modal */}
                 {user && (
                     <>
@@ -203,22 +281,24 @@ const Blog = () => {
                 </Typography>)}
                 {tag && (<Link to="/"><Button>Clear tag filter</Button></Link>)}
             </Box>
-            {status !== null && !status.includes("Loading") ? (
-                <Box my={5} display="flex" justifyContent="center" alignItems="center"><CircularProgress /></Box>
-            ) : (
-                <Box>
-                    {blogs.map((blog) => (
-                        <BlogEntry
-                            key={blog.id}
-                            blog={blog}
-                            user={user}
-                            isEditing={(blog.id === editingBlogId)}
-                            onEdit={() => setEditingBlogId(blog.id)}
-                            onStatusChange={(status) => setStatus(status)}
-                        />
-                    ))}
-                </Box>
-            )}
+            {
+                status !== null && !status.includes("Loading") ? (
+                    <Box my={5} display="flex" justifyContent="center" alignItems="center"><CircularProgress /></Box>
+                ) : (
+                    <Box>
+                        {blogs.map((blog) => (
+                            <BlogEntry
+                                key={blog.id}
+                                blog={blog}
+                                user={user}
+                                isEditing={(blog.id === editingBlogId)}
+                                onEdit={() => setEditingBlogId(blog.id)}
+                                onStatusChange={(status) => setStatus(status)}
+                            />
+                        ))}
+                    </Box>
+                )
+            }
             <Snackbar
                 open={!!status && !status.includes("Loading")}
                 autoHideDuration={1000}
@@ -229,7 +309,7 @@ const Blog = () => {
             {/* <Typography variant="body2" color="text.secondary" component="p" textAlign={"center"}>
                 This is a page by <a href="https://github.com/tollefj">me</a>.
             </Typography> */}
-        </Box>
+        </Box >
     );
 }
 

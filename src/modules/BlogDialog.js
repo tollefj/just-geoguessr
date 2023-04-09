@@ -1,11 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Snackbar, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
+import { Button, Dialog, DialogActions, DialogContent, TextField, Typography } from '@mui/material';
 import useImageClip from '../hooks/useImageClip';
 import uploadImage from '../util/upload';
 import { storage, db } from '../firebase';
 import { setDoc, doc, updateDoc } from 'firebase/firestore';
-import { Box } from '@mui/system';
 import CountrySelector from '../components/CountrySelect';
+
+function getTokens(content, tags, country) {
+    let tokens = content.toLowerCase().split(" ");
+    const invalid = ['!', '[', '('];
+    tokens = tokens.filter((token) => !invalid.some((i) => token.trim().startsWith(i)));
+    const countryTokens = !!country ? [country.label.toLowerCase(), country.code.toLowerCase()] : []
+
+    // split tags by comma and create a token for each
+    const tagTokens = tags.split(',').map((tag) => tag.trim().toLowerCase());
+
+    let toks = tokens.concat(tagTokens).concat(countryTokens);
+    // trim:
+    toks = toks.map((t) => t.trim());
+    toks = [...new Set(toks)];
+    return toks;
+}
 
 const BlogDialog = ({ blog = null, onStatusChange, open, onClose }) => {
     const [country, setCountry] = useState("");
@@ -36,14 +51,11 @@ const BlogDialog = ({ blog = null, onStatusChange, open, onClose }) => {
         const id = new Date().toISOString();
         const docRef = doc(db, "blog", id);
 
-        const tokens = content.toLowerCase().split(" ");
-        const countryTokens = !!country ? [country.label.toLowerCase(), country.code.toLowerCase()] : []
-
         setDoc(docRef, {
             country: country,
             content: content,
             tags: tags.split(',').map((tag) => tag.trim()),
-            searchTokens: tokens.concat(tags).concat(countryTokens),
+            searchTokens: getTokens(content, tags, country),
             posted: id
         }).then(() => {
             onStatusChange && onStatusChange(`Added new meta for ${country.label}`);
@@ -51,12 +63,15 @@ const BlogDialog = ({ blog = null, onStatusChange, open, onClose }) => {
         });
     };
 
+
     const handleUpdate = async (event) => {
         event.preventDefault();
         const docRef = doc(db, "blog", blog.id);
+
         updateDoc(docRef, {
             content: content,
             country: country,
+            searchTokens: getTokens(content, tags, country),
             tags: tags.split(',').map((tag) => tag.trim()),
             edited: new Date().toISOString(),
         }).then(() => {

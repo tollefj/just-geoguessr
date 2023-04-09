@@ -1,23 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { TextField, Typography, Box, IconButton, Autocomplete } from '@mui/material';
+import React from 'react';
+import { Typography, Box, IconButton } from '@mui/material';
 import { Markdown } from './Markdown';
 import EditIcon from '@mui/icons-material/Edit';
-import SaveIcon from '@mui/icons-material/Save';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { deleteDoc, doc, updateDoc } from "firebase/firestore";
+import { deleteDoc, doc, } from "firebase/firestore";
 import { db } from '../firebase';
 import { useNavigate } from 'react-router-dom';
 import { useParams } from 'react-router-dom';
-
-import CountrySelector from './CountrySelect';
-
-// const id = new Date().toISOString();
-// await setDoc(doc(db, "blog", id), {
-//     title: title,
-//     content: content,
-//     type: format,
-// });
-
 
 function docIdToIso(docId) {
     // Posted 30 March 2023 at 19:10
